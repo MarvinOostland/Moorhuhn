@@ -1,9 +1,3 @@
-from fileinput import filename
-import math
-from math import sqrt
-from time import time
-from tkinter import Y
-
 import pygame
 import random
 import os
@@ -19,37 +13,33 @@ class Settings(object):
     path_image = os.path.join(os.path.dirname(__file__), "images")
     path_sound = os.path.join(os.path.dirname(__file__), "sounds")
     path_highscore = os.path.join(os.path.dirname(__file__), "highscore.txt")
+    scroll = 0
 
 
 class Background():
-    def __init__(self,filename,x,y):
-        self.image = pygame.image.load(os.path.join(Settings.path_image, filename))
-        self.image = pygame.transform.scale(self.image, (Settings.window_width, Settings.window_height))
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+    def __init__(self,filename1, filename2, x,y):
+        self.image1 = pygame.image.load(os.path.join(Settings.path_image, filename1))
+        self.image2 = pygame.image.load(os.path.join(Settings.path_image, filename2))
+        #self.image = pygame.transform.scale(self.image, (Settings.window_width, Settings.window_height))
+        self.rect1 = self.image1.get_rect()
+        self.rect1.x = x
+        self.rect1.y = y
+        self.rect2 = self.image2.get_rect()
+        self.rect2.x = x
+        self.rect2.y = y
 
-    def is_near_border(self, mouse_x, mouse_y):
-        if mouse_x < Settings.border or mouse_x > Settings.window_width - Settings.border:
-            return True
-        elif mouse_y < Settings.border or mouse_y > Settings.window_height - Settings.border:
-            return True
-        else:
-            return False
-    
-    def move(self, mouse_x, mouse_y):
-        if self.is_near_border(mouse_x, mouse_y):
-            self.rect.x -= 1
-            self.rect.y -= 1
-        else:
-            self.rect.x = mouse_x
-            self.rect.y = mouse_y
+    def drawbg(self, screen, x,y): 
+        width1 = self.image1.get_width()
+        width2 = self.image2.get_width()
+        for i  in range(y):
+            screen.blit(self.image2, ((i*width2) - Settings.scroll, Settings.window_height - 0))
+            screen.blit(self.image1, ((i*width1) - Settings.scroll, Settings.window_height - self.image1.get_height()))
     
     def get_rect(self):
         return self.rect
 
     def draw(self, screen):
-        screen.blit(self.image,self.rect)
+        self.drawbg(screen, 1, 2)
 
 class Timer(object):
     def __init__(self, duration, with_start = True):
@@ -130,7 +120,7 @@ class Game(object):
         self.screen = pygame.display.set_mode((Settings.window_width, Settings.window_height))
         self.clock = pygame.time.Clock()
         self.running = True
-        self.background1 = Background("Farm.jpg", 0, 0)
+        self.background1 = Background("backgroundcombined.png", "sky.png", 0, 0)
         self.mouse = Mouse()
         self.pause = False
         pygame.mouse.set_visible(False)
@@ -241,7 +231,17 @@ class Game(object):
         if self.points > Game.get_highscore():
             Game.set_highscore(self.points)
 
+    def checkmousepostion(self) -> None:
+        """
+        Checking mouse position
+        """
+        if pygame.mouse.get_pos()[0] >= Settings.window_width - 100 and Settings.scroll<1500:
+            Settings.scroll += 10
+        elif pygame.mouse.get_pos()[0] <= 0 + 100 and Settings.scroll>0:
+            Settings.scroll -= 10
+
     def update(self):
+        self.checkmousepostion()
         self.t += 1
         if self.t >= Settings.timeunit:
             self.t = 0
