@@ -57,7 +57,7 @@ class Timer(object):
         return False
 
 
-# class Bullets(pygame.sprite.Sprite):
+# class Ammo(pygame.sprite.Sprite):
 #     def __init__ (self,filename, x, y):
 #         self.images = []
 #         self.image = pygame.image.load(os.path.join(Settings.path_image, filename))
@@ -139,6 +139,7 @@ class Game(object):
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((Settings.window_width, Settings.window_height))
+        self.captions = pygame.display.set_caption("Moorhuhn")
         self.clock = pygame.time.Clock()
         self.running = True
         self.background1 = Background("backgroundcombined.png", "sky.png", 0, 0)
@@ -163,6 +164,7 @@ class Game(object):
                 self.draw()
             if not self.pause and not self.gameover and self.start_menu1 == False:
                 self.update()
+                self.timer_event()
             elif self.pause == True:
                 self.paused()
             elif self.gameover == True:
@@ -208,7 +210,7 @@ class Game(object):
         start_menu_start = self.font_normalsize.render("To Start press Space", False, (255, 255, 255))
         start_menu_exit = self.font_normalsize.render("For Exit press Escape", False, (255, 255, 255))
         self.screen.blit(start_menu_title, (
-            Settings.window_width // 2 - start_menu_title.get_width() // 2, Settings.window_height // 2 - start_menu_title.get_height() // 2))
+            Settings.window_width // 2 - start_menu_title.get_width() // 2, Settings.window_height // 2.3 - start_menu_title.get_height() // 2.3))
         self.screen.blit(start_menu_start, (
             Settings.window_width // 2 - start_menu_start.get_width() // 2,
             Settings.window_height // 2.1 - start_menu_start.get_height() // 2.1))
@@ -224,6 +226,18 @@ class Game(object):
                     self.running = True
                 if event.key == pygame.K_ESCAPE:
                     pass
+    
+    def timer_event(self):
+        self.timertime = pygame.time.get_ticks() / 1000
+        font = pygame.font.Font(pygame.font.get_default_font(), 16)
+        timer = font.render(f"Time:{self.timertime}", False, (255, 255, 255))
+        self.screen.blit(timer, (
+            Settings.window_width - timer.get_width() - 10, 10))
+        if self.running == True:
+            self.t +1
+            if self.timertime > 120:
+                self.gameover = True
+                self.running = False
 
     def watch_for_events(self):
         for event in pygame.event.get():
