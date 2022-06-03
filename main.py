@@ -8,6 +8,7 @@ class Settings(object):
     window_height = 720
     fps = 60
     chicken_size = (130, 130)
+    bullet_size = (10, 10)
     border = 10
     timeunit = 60
     path_image = os.path.join(os.path.dirname(__file__), "images")
@@ -56,13 +57,20 @@ class Timer(object):
         return False
 
 
-class Bullets(pygame.sprite.Sprite):
-    def __init__ (self,filename, x, y):
-        self.image = pygame.image.load(os.path.join(Settings.path_image, filename))
-        self.image = pygame.transform.scale(self.image, Settings.chicken_size)
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+# class Bullets(pygame.sprite.Sprite):
+#     def __init__ (self,filename, x, y):
+#         self.images = []
+#         self.image = pygame.image.load(os.path.join(Settings.path_image, filename))
+#         self.image = pygame.transform.scale(self.image, Settings.chicken_size)
+#         self.rect = self.image.get_rect()
+#         self.rect.x = x
+#         self.rect.y = y
+    
+#     def shot_animation(self):
+#         self.animationtimer = Timer(30)
+#         for i in range(17):
+#             bitmap = pygame.image.load(os.path.join(Settings.path_image, f"Moohuen{i}.png"))
+#             self.images.append(bitmap)
     
     def draw(self, screen):
         screen.blit(self.image, self.rect)
@@ -74,7 +82,8 @@ class Chicken(pygame.sprite.Sprite):
         for i in range(13):
             bitmap = pygame.image.load(os.path.join(Settings.path_image, f"Moohuen{i}.png"))
             self.images.append(bitmap)
-        self.image = self.images[0]
+        self.frameindex = 0
+        self.image = self.images[self.frameindex]
         self.image = pygame.transform.scale(self.image, Settings.chicken_size)
         self.rect = self.image.get_rect()
         self.rect.left = random.randint(Settings.border, Settings.window_width - Settings.border)
@@ -85,10 +94,19 @@ class Chicken(pygame.sprite.Sprite):
         self.y_speed = 0
         self.position = random.randint(0, Settings.window_width)
         self.animationtimer = Timer(100)
-        self.frameindex = 0
+        self.check_death = False
+        self.got_shot = False
+
 
     def move(self):
         self.rect.move_ip(self.x_speed, self.y_speed)
+        
+    def kill_animation(self):
+        self.check_death = True
+        self.animationtimer = Timer(30)
+        for k in range(7):
+            bitmap2 = pygame.image.load(os.path.join(Settings.path_image, f"Die{k}.png"))
+            self.images.append(bitmap2)
 
     def update(self):
         self.move()
@@ -97,6 +115,9 @@ class Chicken(pygame.sprite.Sprite):
             self.frameindex += 1
             if self.frameindex == len(self.images)- 1:
                 self.frameindex = 0
+                if self.check_death == True:
+                    self.kill()
+            self.image = self.images[self.frameindex]
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
@@ -123,6 +144,7 @@ class Game(object):
         self.background1 = Background("backgroundcombined.png", "sky.png", 0, 0)
         self.mouse = Mouse()
         self.pause = False
+        self.start_menu1 = True
         pygame.mouse.set_visible(False)
         self.chickens = pygame.sprite.Group()
         self.t = 0
@@ -134,9 +156,12 @@ class Game(object):
     def run(self):
         while self.running:
             self.clock.tick(Settings.fps)
-            self.watch_for_events()
-            self.draw()
-            if not self.pause and not self.gameover:
+            if self.start_menu1 == True:
+                self.start_menu()
+            else:
+                self.watch_for_events()
+                self.draw()
+            if not self.pause and not self.gameover and self.start_menu1 == False:
                 self.update()
             elif self.pause == True:
                 self.paused()
@@ -174,6 +199,31 @@ class Game(object):
             Settings.window_width // 2 - gameover_score.get_width() // 2,
             Settings.window_height // 2.2 - gameover_score.get_height() // 2.2))
 
+    def start_menu(self):
+        start_menu_screenfill = pygame.Surface((Settings.window_width, Settings.window_height))
+        start_menu_screenfill.fill((170, 170, 170))
+        start_menu_screenfill.set_alpha(180)
+        self.screen.blit(start_menu_screenfill, (0, 0))
+        start_menu_title = self.font_normalsize.render("Moorhuhn", False, (255, 255, 255))
+        start_menu_start = self.font_normalsize.render("To Start press Space", False, (255, 255, 255))
+        start_menu_exit = self.font_normalsize.render("For Exit press Escape", False, (255, 255, 255))
+        self.screen.blit(start_menu_title, (
+            Settings.window_width // 2 - start_menu_title.get_width() // 2, Settings.window_height // 2 - start_menu_title.get_height() // 2))
+        self.screen.blit(start_menu_start, (
+            Settings.window_width // 2 - start_menu_start.get_width() // 2,
+            Settings.window_height // 2.1 - start_menu_start.get_height() // 2.1))
+        self.screen.blit(start_menu_exit, (
+            Settings.window_width // 2 - start_menu_exit.get_width() // 2,
+            Settings.window_height // 2.2 - start_menu_exit.get_height() // 2.2))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return "exit"
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    self.start_menu1 = False
+                    self.running = True
+                if event.key == pygame.K_ESCAPE:
+                    pass
 
     def watch_for_events(self):
         for event in pygame.event.get():
@@ -187,7 +237,8 @@ class Game(object):
                         pygame.mixer.Sound.play(burst_sound)
                         pygame.mixer.Sound.set_volume(burst_sound, 0.3)
                         self.points += abs(chicken.x_speed)
-                        chicken.kill()
+                        Chicken.kill_animation(chicken)
+
                 if event.button == 3:
                     self.pause = not self.pause
             if event.type == pygame.KEYDOWN:
