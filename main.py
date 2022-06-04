@@ -1,3 +1,4 @@
+from email.mime import image
 import pygame
 import random
 import os
@@ -62,21 +63,19 @@ class Timer(object):
         return False
 
 
-# class Ammo(pygame.sprite.Sprite):
-#     def __init__ (self,filename, x, y):
-#         self.images = []
-#         self.image = pygame.image.load(os.path.join(Settings.path_image, filename))
-#         self.image = pygame.transform.scale(self.image, Settings.chicken_size)
-#         self.rect = self.image.get_rect()
-#         self.rect.x = x
-#         self.rect.y = y
-
-#     def shot_animation(self):
-#         self.animationtimer = Timer(30)
-#         for i in range(17):
-#             bitmap = pygame.image.load(os.path.join(Settings.path_image, f"Moohuen{i}.png"))
-#             self.images.append(bitmap)
-
+class Ammo(pygame.sprite.Sprite):
+    def __init__(self, filename):
+        super().__init__(os.path.join(Settings.path_image, filename))
+        self.rect = self.get_rect()
+        self.images = []
+        for i in range(17):
+            bitmap = pygame.image.load(os.path.join(
+                Settings.path_image, f"Ammo{i}.png"))
+            self.images.append(bitmap)
+        self.frameindex = 0
+        self.image = self.images[self.frameindex]
+        self.image = pygame.transform.scale(self.image, (Settings.bullet_size))
+        self.rect = self.image.get_rect()
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
@@ -251,7 +250,7 @@ class Game(object):
                     self.start_menu1 = False
                     self.running = True
                 if event.key == pygame.K_ESCAPE:
-                    pass
+                    self.running = False
 
     def timer_event(self):
         self.timertime = pygame.time.get_ticks() / 1000
